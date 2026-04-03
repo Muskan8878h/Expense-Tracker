@@ -87,7 +87,7 @@ SpendSense is a modern **AI-powered expense tracking web application** that help
 
 ## 📸 Preview
 
-![Dashboard Screenshot](./assets/dashboard.png)
+![Dashboard Screenshot](./assets/dashboard.jpg)
 
 ---
 
@@ -95,4 +95,4 @@ SpendSense is a modern **AI-powered expense tracking web application** that help
 
 1. Clone the repository  
    ```bash
-   git clone https://github.com/your-username/Expense-Tracker.git
+   git clone https://github.com/Muskan8878h/Expense-Tracker
