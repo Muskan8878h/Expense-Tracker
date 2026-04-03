@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpendSense - AI Expense Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ── Auth Overlay ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>SpendSense</h1>
+        <p>AI Expense Tracker</p>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="authSwitch('login')">Sign in</button>
+      <button class="auth-tab" onclick="authSwitch('signup')">Create account</button>
+    </div>
+    <div id="auth-login">
+      <div class="auth-field"><label>Email</label><input type="email" id="l-email" placeholder="you@email.com"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+      <div class="auth-err" id="l-err"></div>
+      <button class="btn primary auth-btn" onclick="doLogin()">Sign in</button>
+      <p style="font-size:12px;color:var(--c-muted);margin-top:10px;text-align:center;">Demo: any email + any password works</p>
+    </div>
+    <div id="auth-signup" style="display:none;">
+      <div class="auth-field"><label>Full name</label><input type="text" id="s-name" placeholder="Your name"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="s-email" placeholder="you@email.com"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="s-pass" placeholder="At least 6 characters"></div>
+      <div class="auth-err" id="s-err"></div>
+      <button class="btn primary auth-btn" onclick="doSignup()">Create account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── App Shell ── -->
+<div class="shell" id="app" style="display:none;">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>SpendSense</h1>
+        <p>AI Expense Tracker</p>
+      </div>
+    </div>
+    <button class="nav-item active" onclick="go('dashboard',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="go('log',this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+      <span>Log Expense</span>
+    </button>
+    <button class="nav-item" onclick="go('insights',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+      <span>AI Insights</span>
+    </button>
+    <button class="nav-item" onclick="go('forecast',this)">
+      <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+      <span>Forecast</span>
+    </button>
+    <button class="nav-item" onclick="go('budget',this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+      <span>Budgets</span>
+    </button>
+    <div style="flex:1;"></div>
+    <button class="nav-item" onclick="doLogout()" style="color:var(--c-danger);">
+      <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+      <span>Logout</span>
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="tab-dashboard" class="section active">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p id="dash-greeting">Welcome back! Here's your financial snapshot.</p>
+      </div>
+      <div class="metrics-grid" id="metrics-row"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent transactions</div>
+            <div class="filter-row" id="filter-row"></div>
+          </div>
+          <ul class="expense-list" id="expense-list">
+            <li class="empty">No expenses yet — log your first one!</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Budget usage this month</div>
+          <div id="budget-bars"><div class="empty">Log expenses to see budget usage.</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daily spending — last 30 days</div>
+        <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ LOG EXPENSE ══ -->
+    <div id="tab-log" class="section">
+      <div class="page-header">
+        <h2>Log Expense</h2>
+        <p>Paste a receipt, describe a purchase, or fill in manually.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">AI receipt / text parser</div>
+        <div class="form-grid">
+          <div class="field form-full">
+            <label>Paste receipt text or describe your expense in plain language</label>
+            <textarea id="receipt-text" placeholder="e.g. 'Starbucks coffee 280 Rs, sandwich 150 Rs' or paste a full receipt..."></textarea>
+          </div>
+        </div>
+        <button class="btn primary" id="parse-btn" onclick="parseReceipt()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+          AI Parse &amp; Auto-Categorize
+        </button>
+        <div class="scan-result" id="scan-result"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Manual entry</div>
+        <div class="form-grid">
+          <div class="field"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Lunch at café"></div>
+          <div class="field"><label>Amount (₹)</label><input type="number" id="f-amt" placeholder="0" min="0" step="0.01"></div>
+          <div class="field">
+            <label>Category</label>
+            <select id="f-cat">
+              <option value="Food">🍽 Food &amp; Dining</option>
+              <option value="Transport">🚗 Transport</option>
+              <option value="Shopping">🛍 Shopping</option>
+              <option value="Health">💊 Health</option>
+              <option value="Entertainment">🎬 Entertainment</option>
+              <option value="Utilities">⚡ Utilities</option>
+              <option value="Other">📦 Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+        </div>
+        <button class="btn success" onclick="addManual()">Add Expense</button>
+      </div>
+    </div>
+
+    <!-- ══ AI INSIGHTS ══ -->
+    <div id="tab-insights" class="section">
+      <div class="page-header">
+        <h2>AI Insights</h2>
+        <p>Personalized savings suggestions powered by Gemini AI.</p>
+      </div>
+      <div class="card">
+        <div class="ai-bubble">
+          <div class="ai-avatar">
+            <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1v2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2v-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18 2.5 2.5 0 0 0 10 15.5 2.5 2.5 0 0 0 7.5 13m9 0A2.5 2.5 0 0 0 14 15.5a2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 16.5 13z"/></svg>
+          </div>
+          <div class="ai-msg" id="ai-intro">Hi! I'm your AI financial advisor. Log some expenses and click "Generate Insights" — I'll analyze your patterns and suggest how to save more.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn primary" onclick="generateInsights()" id="insights-btn">Generate Insights</button>
+          <button class="btn" onclick="clearInsights()">Clear</button>
+        </div>
+        <div class="insight-list" id="insight-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ask your advisor</div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="ai-question" placeholder="e.g. How can I cut food expenses? Am I on budget?" style="flex:1;">
+          <button class="btn primary" onclick="askAdvisor()">Ask</button>
+        </div>
+        <div id="qa-thread" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ══ FORECAST ══ -->
+    <div id="tab-forecast" class="section">
+      <div class="page-header">
+        <h2>Spending Forecast</h2>
+        <p>AI predictions for your next 3 months based on current patterns.</p>
+      </div>
+      <div class="card">
+        <div class="ai-bubble">
+          <div class="ai-avatar">
+            <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+          </div>
+          <div class="ai-msg" id="forecast-msg">Log at least 3 expenses, then click "Run Forecast" to see predicted spending for the next 3 months.</div>
+        </div>
+        <button class="btn primary" onclick="runForecast()" id="forecast-btn">Run AI Forecast</button>
+        <div class="predict-row" id="predict-row"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Spending by category (this month)</div>
+        <div class="chart-wrap" style="height:260px;"><canvas id="catChart"></canvas></div>
+      </div>
+      <div class="card" id="alert-card" style="display:none;">
+        <div class="card-title">Budget alerts</div>
+        <div class="insight-list" id="alert-list"></div>
+      </div>
+    </div>
+
+    <!-- ══ BUDGETS ══ -->
+    <div id="tab-budget" class="section">
+      <div class="page-header">
+        <h2>Monthly Budgets</h2>
+        <p>Set spending limits per category. Alerts trigger at 80%.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Budget limits (₹ / month)</div>
+        <div class="bud-grid" id="budget-inputs"></div>
+        <button class="btn primary" onclick="saveBudgets()">Save Budgets</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- JS files loaded in order -->
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/expenses.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
